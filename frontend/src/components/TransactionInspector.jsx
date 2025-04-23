@@ -1,26 +1,26 @@
 // src/components/TransactionInspector.jsx
 import React, { useState } from 'react';
 import Web3 from 'web3';
-//import { abi as contractAbi } from './INspectAbi/Incentive.json'; // update with your path to ABI
-import incentiveJson from './INspectAbi/Incentive.json'; // ✅ fix import
-
-const contractAbi = incentiveJson.abi; // ✅ extract ABI
+//import { abi as contractAbi } from './INspectAbi/Incentive.json';
+import contractJson from './INspectAbi/Incentive.json';
+const contractAbi = contractJson.abi;
 
 export default function TransactionInspector({ web3 }) {
   const [txHash, setTxHash] = useState('');
-  const [details, setDetails] = useState(null);
-  const [logs, setLogs] = useState([]);
-  const [block, setBlock] = useState(null);
-  const [inputDecoded, setInputDecoded] = useState(null);
+  const [txDetails, setTxDetails] = useState(null);
+  const [decodedInput, setDecodedInput] = useState(null);
+  const [eventLogs, setEventLogs] = useState([]);
+  const [blockDetails, setBlockDetails] = useState(null);
   const [error, setError] = useState('');
 
   const contract = new web3.eth.Contract(contractAbi);
 
+  // Decode function input for submitRoundInfo
   const decodeSubmitRoundInput = (input) => {
-    const params = input.slice(10); // Remove "0x" and method selector
+    const cleanInput = input.slice(10); // Remove method selector
     const decoded = web3.eth.abi.decodeParameters(
       ['uint256', 'uint256', 'uint256'],
-      '0x' + params
+      '0x' + cleanInput
     );
     return {
       round: decoded[0],
@@ -29,118 +29,150 @@ export default function TransactionInspector({ web3 }) {
     };
   };
 
-  const getTransaction = async () => {
+  const fetchBasicInfo = async () => {
     try {
       const tx = await web3.eth.getTransaction(txHash);
       const receipt = await web3.eth.getTransactionReceipt(txHash);
-      if (!tx) return setError('Transaction not found');
-      setDetails({ ...tx, ...receipt });
-      setError('');
-    } catch (err) {
-      setError('Error fetching transaction');
-    }
-  };
 
-  const decodeInput = async () => {
-    try {
-      const tx = await web3.eth.getTransaction(txHash);
-      if (!tx || !tx.input) return setError('No input data');
-
-      const methodSig = tx.input.slice(0, 10);
-      const expectedSig = web3.eth.abi.encodeFunctionSignature("submitRoundInfo(uint256,uint256,uint256)");
-
-      if (methodSig !== expectedSig) {
-        return setError('Input is not from submitRoundInfo()');
+      if (!tx || !receipt) {
+        setError('Transaction or receipt not found');
+        return;
       }
 
-      const decoded = decodeSubmitRoundInput(tx.input);
-      setInputDecoded(decoded);
+      setTxDetails({
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        nonce: tx.nonce,
+        gas: tx.gas,
+        gasPrice: tx.gasPrice,
+        value: tx.value,
+        status: receipt.status,
+        blockNumber: receipt.blockNumber,
+        transactionIndex: receipt.transactionIndex,
+        cumulativeGasUsed: receipt.cumulativeGasUsed,
+        gasUsed: receipt.gasUsed,
+        contractAddress: receipt.contractAddress,
+      });
+
       setError('');
     } catch (err) {
       console.error(err);
-      setError('Failed to decode input');
+      setError('Error fetching transaction details');
     }
   };
 
-  const getLogs = async () => {
+  const fetchDecodedInput = async () => {
     try {
-      const receipt = await web3.eth.getTransactionReceipt(txHash);
-      if (!receipt) return setError('Receipt not found');
-      setLogs(receipt.logs);
+      const tx = await web3.eth.getTransaction(txHash);
+      const methodSig = tx.input.slice(0, 10);
+      const expectedSig = web3.eth.abi.encodeFunctionSignature('submitRoundInfo(uint256,uint256,uint256)');
+
+      if (methodSig !== expectedSig) {
+        setDecodedInput({ error: 'Input does not match submitRoundInfo' });
+        return;
+      }
+
+      const decoded = decodeSubmitRoundInput(tx.input);
+      setDecodedInput(decoded);
       setError('');
     } catch (err) {
+      console.error(err);
+      setError('Error decoding input');
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const receipt = await web3.eth.getTransactionReceipt(txHash);
+      const parsedLogs = [];
+
+      for (let log of receipt.logs) {
+        try {
+          const decoded = contract._decodeEventABI.call({ name: 'ALLEVENTS' }, log);
+          parsedLogs.push(decoded);
+        } catch {
+          parsedLogs.push({ raw: log });
+        }
+      }
+
+      setEventLogs(parsedLogs);
+      setError('');
+    } catch (err) {
+      console.error(err);
       setError('Error fetching logs');
     }
   };
 
-  const getBlockInfo = async () => {
+  const fetchBlockDetails = async () => {
     try {
       const receipt = await web3.eth.getTransactionReceipt(txHash);
-      if (!receipt) return setError('Receipt not found');
-      const blockInfo = await web3.eth.getBlock(receipt.blockNumber);
-      setBlock(blockInfo);
+      const block = await web3.eth.getBlock(receipt.blockNumber);
+
+      setBlockDetails({
+        number: block.number,
+        timestamp: new Date(block.timestamp * 1000).toLocaleString(),
+        miner: block.miner,
+        gasLimit: block.gasLimit,
+        gasUsed: block.gasUsed,
+        baseFeePerGas: block.baseFeePerGas,
+        transactions: block.transactions.length
+      });
+
       setError('');
     } catch (err) {
-      setError('Error fetching block');
+      console.error(err);
+      setError('Error fetching block details');
     }
   };
 
   return (
     <div style={{ marginTop: '2rem' }}>
-      <h3>🛠️ Transaction Inspector</h3>
+      <h2>🔍 Transaction Inspector</h2>
       <input
         type="text"
         placeholder="Enter transaction hash"
         value={txHash}
         onChange={(e) => setTxHash(e.target.value)}
-        style={{ width: '100%' }}
+        style={{ width: '100%', padding: '0.5rem', fontSize: '1rem' }}
       />
-      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <button onClick={getTransaction}>🔍 Basic Info</button>
-        <button onClick={decodeInput}>🧠 Decode Input</button>
-        <button onClick={getLogs}>📦 View Logs</button>
-        <button onClick={getBlockInfo}>⛓️ Block Info</button>
+
+      <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        <button onClick={fetchBasicInfo}>📄 Fetch Basic Info</button>
+        <button onClick={fetchDecodedInput}>🧠 Decode Input</button>
+        <button onClick={fetchLogs}>📜 View Logs</button>
+        <button onClick={fetchBlockDetails}>⛓️ Block Info</button>
       </div>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {details && (
+      {txDetails && (
         <div>
-          <h4>  Basic Info:</h4>
-          <ul>
-            <li><strong>From:</strong> {details.from}</li>
-            <li><strong>To:</strong> {details.to}</li>
-            <li><strong>Gas Used:</strong> {details.gasUsed}</li>
-            <li><strong>Status:</strong> {details.status ? '✅ Success' : '❌ Fail'}</li>
-            <li><strong>Nonce:</strong> {details.nonce}</li>
-            <li><strong>Block:</strong> {details.blockNumber}</li>
-          </ul>
+          <h4>📄 Basic Info:</h4>
+          <pre>{JSON.stringify(txDetails, null, 2)}</pre>
         </div>
       )}
 
-      {inputDecoded && (
+      {decodedInput && (
         <div>
           <h4>🧬 Decoded Input:</h4>
-          <pre>{JSON.stringify(inputDecoded, null, 2)}</pre>
+          <pre>{JSON.stringify(decodedInput, null, 2)}</pre>
         </div>
       )}
 
-      {logs.length > 0 && (
+      {eventLogs.length > 0 && (
         <div>
-          <h4> Logs:</h4>
-          <pre>{JSON.stringify(logs, null, 2)}</pre>
+          <h4>📜 Event Logs:</h4>
+          {eventLogs.map((log, idx) => (
+            <pre key={idx}>{JSON.stringify(log, null, 2)}</pre>
+          ))}
         </div>
       )}
 
-      {block && (
+      {blockDetails && (
         <div>
-          <h4> Block Info:</h4>
-          <ul>
-            <li><strong>Block Number:</strong> {block.number}</li>
-            <li><strong>Timestamp:</strong> {new Date(block.timestamp * 1000).toLocaleString()}</li>
-            <li><strong>Miner:</strong> {block.miner}</li>
-            <li><strong>Gas Limit:</strong> {block.gasLimit}</li>
-          </ul>
+          <h4>⛓️ Block Info:</h4>
+          <pre>{JSON.stringify(blockDetails, null, 2)}</pre>
         </div>
       )}
     </div>
