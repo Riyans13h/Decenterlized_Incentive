@@ -62,4 +62,4 @@ Status: ${receipt.status ? '✅ Success' : '❌ Failed'}
       console.log('ℹ️ No contract ABI found for address:', receipt.to);
     }
   }
-};
+}

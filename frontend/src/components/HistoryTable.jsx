@@ -23,7 +23,7 @@ export default function HistoryTable({ history }) {
                 <td>{entry.round}</td>
                 <td>{entry.reward}</td>
                 <td>{entry.shapley}</td>
-                <td title={entry.txHash}>{entry.txHash.slice(0, 70)}}</td>
+                <td title={entry.txHash}>{entry.txHash.slice(0, 70)}</td>
                 <td>{entry.blockNumber || 'Pending'}</td>
                 <td>{entry.timestamp}</td>
               </tr>

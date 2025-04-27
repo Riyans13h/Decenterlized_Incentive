@@ -6,7 +6,8 @@ import contractJson from './INspectAbi/Incentive.json';
 
 const web3 = new Web3('ws://127.0.0.1:9545');
 const contractAbi = contractJson.abi;
-const contractAddress = '0xE7069c455d3185F631ED3615B0386e5F963fAeaf';
+//const contractAddress = '0xE7069c455d3185F631ED3615B0386e5F963fAeaf';
+const contractAddress = '0xB418D99ecF07bb3DfA6a2C8DBAB213c5Aa7FC95D';
 const contract = new web3.eth.Contract(contractAbi, contractAddress);
 
 export default function TransactionInspector() {
