@@ -1,110 +1,166 @@
 // src/components/PuzzleGame.jsx
 import React, { useState } from 'react';
-import { Button, TextField } from '@mui/material';
 
-const PuzzleGame = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
+const puzzles = {
+  Easy: [
+    { question: "What is 2 + 2?", answer: "4" },
+    { question: "Unscramble: 'TCA'", answer: "CAT" },
+    { question: "What color is the sky?", answer: "Blue" },
+    { question: "What comes after 5?", answer: "6" },
+    { question: "How many legs does a cat have?", answer: "4" },
+    { question: "Unscramble: 'OGD'", answer: "DOG" },
+    { question: "What is the first letter of 'Banana'?", answer: "B" },
+    { question: "What color are bananas?", answer: "Yellow" }
+  ],
+  Medium: [
+    { question: "What is 7 x 6?", answer: "42" },
+    { question: "Unscramble: 'PAELP'", answer: "APPLE" },
+    { question: "What comes next: 3, 6, 9, ?", answer: "12" },
+    { question: "What is 15 - 7?", answer: "8" },
+    { question: "Unscramble: 'CNOUMTPER'", answer: "COMPUTER" },
+    { question: "What is 11 x 11?", answer: "121" },
+    { question: "What comes next: 5, 10, 20, ?", answer: "40" },
+    { question: "Unscramble: 'LOOCHS'", answer: "SCHOOL" }
+  ],
+  Hard: [
+    { question: "Unscramble: 'NOITAZAGIN'", answer: "ORGANIZATION" },
+    { question: "What is 17 x 13?", answer: "221" },
+    { question: "What comes next: 2, 4, 8, 16, ?", answer: "32" },
+    { question: "Unscramble: 'YTIROIRP'", answer: "PRIORITY" },
+    { question: "Solve: 35 x 24", answer: "840" },
+    { question: "Unscramble: 'NIIMNTLIOA'", answer: "ILLUMINATION" },
+    { question: "What is 144 ÷ 12?", answer: "12" },
+    { question: "Unscramble: 'AGMNREO'", answer: "MANAGER" }
+  ]
+};
+
+export default function PuzzleGame({ onFinish }) {
+  const [difficulty, setDifficulty] = useState('Easy');
+  const [currentPuzzle, setCurrentPuzzle] = useState(null);
+  const [userAnswer, setUserAnswer] = useState('');
   const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
-  const [timeTaken, setTimeTaken] = useState(null);
-  const [reward, setReward] = useState(0);
-  const [shapley, setShapley] = useState(0);
-  const [round, setRound] = useState(0);
-  const [playerAnswer, setPlayerAnswer] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
+  const [round, setRound] = useState(1);
 
-  // Puzzle logic (Example)
-  const puzzles = [
-    { question: 'What is 2 + 2?', answer: '4' },
-    { question: 'What is 5 * 5?', answer: '25' },
-    { question: 'What is the capital of France?', answer: 'Paris' }
-  ];
-
-  const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
-
-  // Start the game
-  const startPuzzle = () => {
-    setIsPlaying(true);
-    setStartTime(new Date());
-    setRound(round + 1); // Increment round number
+  const startNewPuzzle = () => {
+    const puzzleList = puzzles[difficulty];
+    const randomPuzzle = puzzleList[Math.floor(Math.random() * puzzleList.length)];
+    setCurrentPuzzle(randomPuzzle);
+    setUserAnswer('');
+    setStartTime(Date.now());
+    setResult(null);
   };
 
-  // End the game and calculate reward
   const submitAnswer = () => {
-    setEndTime(new Date());
-    setIsPlaying(false);
+    if (!currentPuzzle) return;
+    const endTime = Date.now();
+    const timeTaken = (endTime - startTime) / 1000; // seconds
+    const isCorrect = userAnswer.trim().toLowerCase() === currentPuzzle.answer.toLowerCase();
 
-    // Calculate time taken to solve the puzzle
-    const time = (endTime - startTime) / 1000; // in seconds
-    setTimeTaken(time);
+    if (isCorrect) {
+      const reward = Math.max(1000 - Math.floor(timeTaken * 50), 100); // Reward calculation
+      const shapley = Math.max(100 - Math.floor(timeTaken * 5), 10); // Shapley calculation
+      setResult({ success: true, timeTaken, reward, shapley });
 
-    // Calculate reward (example: based on time taken)
-    setReward(calculateReward(time));
-
-    // Calculate Shapley value (simple example, more complexity can be added)
-    setShapley(calculateShapley(time));
-
-    // Show result
-    showResult();
-  };
-
-  const calculateReward = (time) => {
-    // Reward is inversely proportional to the time taken to solve the puzzle (faster is better)
-    return Math.max(1000 - time * 10, 0); // Example: Max reward of 1000, decreases with time
-  };
-
-  const calculateShapley = (time) => {
-    // Simple example, complex logic can be added based on the puzzle's difficulty and time
-    return Math.max(50 - time, 0);
-  };
-
-  const showResult = () => {
-    alert(`Round: ${round}, Reward: ${reward} wei, Shapley Value: ${shapley}`);
+      if (onFinish) {
+        onFinish({ round, reward, shapley });
+      }
+      setRound(prev => prev + 1);
+    } else {
+      setResult({ success: false, timeTaken });
+    }
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 600 }}>
-      <h2>Puzzle Game</h2>
-      {isPlaying ? (
-        <div>
-          <h3>{randomPuzzle.question}</h3>
-          <TextField
-            label="Your Answer"
-            variant="outlined"
-            value={playerAnswer}
-            onChange={(e) => setPlayerAnswer(e.target.value)}
-            fullWidth
-            style={{ marginBottom: 20 }}
+    <div style={styles.container}>
+      <h2>🧩 Puzzle Game</h2>
+
+      <div style={styles.selector}>
+        <label>Select Difficulty: </label>
+        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} style={styles.select}>
+          <option>Easy</option>
+          <option>Medium</option>
+          <option>Hard</option>
+        </select>
+        <button onClick={startNewPuzzle} style={styles.button}>🎯 Start New Puzzle</button>
+      </div>
+
+      {currentPuzzle && (
+        <div style={styles.puzzle}>
+          <h3>🔹 Puzzle: {currentPuzzle.question}</h3>
+          <input
+            type="text"
+            placeholder="Your answer"
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+            style={styles.input}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={submitAnswer}
-            disabled={!playerAnswer}
-            style={{ marginRight: 10 }}
-          >
-            Submit Answer
-          </Button>
-        </div>
-      ) : (
-        <div>
-          <Button variant="contained" color="primary" onClick={startPuzzle}>
-            Start Puzzle
-          </Button>
+          <br />
+          <button onClick={submitAnswer} style={styles.submitButton}>Submit Answer ✅</button>
         </div>
       )}
 
-      {/* Show results after puzzle is solved */}
-      {timeTaken !== null && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Results</h3>
-          <p>Time Taken: {timeTaken} seconds</p>
-          <p>Reward: {reward} wei</p>
-          <p>Shapley Value: {shapley}</p>
+      {result && (
+        <div style={styles.result}>
+          {result.success ? (
+            <>
+              <h3>🎉 Correct!</h3>
+              <p>⏱ Time Taken: {result.timeTaken.toFixed(2)} seconds</p>
+              <p>💰 Reward: {result.reward}</p>
+              <p>⭐ Shapley Value: {result.shapley}</p>
+            </>
+          ) : (
+            <>
+              <h3>❌ Incorrect!</h3>
+              <p>⏱ Time Taken: {result.timeTaken.toFixed(2)} seconds</p>
+            </>
+          )}
         </div>
       )}
     </div>
   );
-};
+}
 
-export default PuzzleGame; // Ensure this is a default export
+const styles = {
+  container: {
+    padding: '20px',
+    border: '2px solid #ddd',
+    borderRadius: '8px',
+    width: '400px',
+    margin: '20px auto',
+    background: '#f9f9f9'
+  },
+  selector: {
+    marginBottom: '15px'
+  },
+  select: {
+    margin: '0 10px',
+    padding: '5px'
+  },
+  button: {
+    padding: '5px 10px',
+    backgroundColor: '#6c63ff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px'
+  },
+  puzzle: {
+    marginTop: '20px'
+  },
+  input: {
+    padding: '8px',
+    width: '80%',
+    marginTop: '10px'
+  },
+  submitButton: {
+    marginTop: '10px',
+    padding: '8px 12px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px'
+  },
+  result: {
+    marginTop: '20px'
+  }
+};

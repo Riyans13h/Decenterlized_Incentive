@@ -12,6 +12,7 @@ const App = () => {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [history, setHistory] = useState([]);
+  const [suggestedData, setSuggestedData] = useState({ round: '', reward: '', shapley: '' }); // default empty
 
   useEffect(() => {
     const init = async () => {
@@ -26,9 +27,12 @@ const App = () => {
   }, []);
 
   const handleSubmit = async (round, reward, shapley) => {
+    if (!contract || !account) return;
+
     const tx = await contract.methods
       .submitRoundInfo(round, reward, shapley)
       .send({ from: account });
+
     const block = await web3.eth.getBlock(tx.blockNumber);
     setHistory((prev) => [
       ...prev,
@@ -41,6 +45,13 @@ const App = () => {
         timestamp: new Date(block.timestamp * 1000).toISOString()
       }
     ]);
+
+    setSuggestedData({ round: '', reward: '', shapley: '' }); // clear after submit
+  };
+
+  // 🎯 After puzzle solved → auto-fill form
+  const handlePuzzleFinish = ({ round, reward, shapley }) => {
+    setSuggestedData({ round, reward, shapley });
   };
 
   return (
@@ -49,18 +60,18 @@ const App = () => {
       <p>Connected account: {account}</p>
 
       {/* Puzzle Game Component */}
-      <PuzzleGame /> {/* Adding the PuzzleGame here */}
+      <PuzzleGame onFinish={handlePuzzleFinish} />
 
-      {/* Round Form */}
-      <RoundForm onSubmit={handleSubmit} />
+      {/* Round Form (auto-filled) */}
+      <RoundForm onSubmit={handleSubmit} suggestedData={suggestedData} />
 
       {/* Round Details */}
       <RoundDetails contract={contract} account={account} />
 
-      {/* History Table for displaying the history of submissions */}
+      {/* History Table */}
       <HistoryTable history={history} />
 
-      {/* Transaction Inspector for inspecting individual transactions */}
+      {/* Transaction Inspector */}
       {web3 && <TransactionInspector web3={web3} />}
     </div>
   );

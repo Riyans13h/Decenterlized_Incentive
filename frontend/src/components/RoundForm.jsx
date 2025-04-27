@@ -1,25 +1,61 @@
-// src/components/RoundForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function RoundForm({ onSubmit }) {
+const RoundForm = ({ onSubmit, suggestedData }) => {
   const [round, setRound] = useState('');
   const [reward, setReward] = useState('');
   const [shapley, setShapley] = useState('');
 
-  const submit = (e) => {
+  // When new suggestion comes from Puzzle → fill form
+  useEffect(() => {
+    if (suggestedData) {
+      setRound(suggestedData.round || '');
+      setReward(suggestedData.reward || '');
+      setShapley(suggestedData.shapley || '');
+    }
+  }, [suggestedData]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    if (!round || !reward || !shapley) {
+      alert('Please fill all fields');
+      return;
+    }
     onSubmit(parseInt(round), parseInt(reward), parseInt(shapley));
-    setRound('');
-    setReward('');
-    setShapley('');
   };
 
   return (
-    <form onSubmit={submit} style={{ marginBottom: '2rem' }}>
-      <input value={round} onChange={(e) => setRound(e.target.value)} placeholder="Round #" required />
-      <input value={reward} onChange={(e) => setReward(e.target.value)} placeholder="Reward (wei)" required />
-      <input value={shapley} onChange={(e) => setShapley(e.target.value)} placeholder="Shapley value" required />
-      <button type="submit">Submit</button>
+    <form onSubmit={handleSubmit} style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+      <h2>📝 Submit Round Info</h2>
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Round:</label>
+        <input
+          type="number"
+          value={round}
+          onChange={(e) => setRound(e.target.value)}
+          required
+        />
+      </div>
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Reward (wei):</label>
+        <input
+          type="number"
+          value={reward}
+          onChange={(e) => setReward(e.target.value)}
+          required
+        />
+      </div>
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Shapley Value:</label>
+        <input
+          type="number"
+          value={shapley}
+          onChange={(e) => setShapley(e.target.value)}
+          required
+        />
+      </div>
+      <button type="submit">🚀 Submit Round</button>
     </form>
   );
-}
+};
+
+export default RoundForm;
