@@ -4,21 +4,34 @@ body {
   background-color: #f1f5f9;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
+/* App container styling */
 .App {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 2rem auto;
   padding: 2rem;
   background-color: #ffffff;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-/* Headings */
-h1, h3 {
-  text-align: center;
+/* Global Heading Styling */
+h1, h2, h3, h4, h5, h6 {
   color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Paragraph Styling */
+p {
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.6;
+  text-align: center;
 }
 
 /* Form styles */
@@ -29,16 +42,23 @@ form {
   margin: 1rem 0;
 }
 
-input {
-  padding: 0.6rem;
+input, select, textarea {
+  padding: 0.8rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 6px;
   width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #1d4ed8;
 }
 
 button {
-  padding: 0.7rem;
+  padding: 0.8rem;
   font-size: 1rem;
   background-color: #1d4ed8;
   color: white;
@@ -52,28 +72,65 @@ button:hover {
   background-color: #2563eb;
 }
 
-/* Round details section */
-ul {
-  list-style: none;
-  padding: 0;
+/* Link styling */
+a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 600;
 }
 
-ul li {
-  padding: 0.3rem 0;
+a:hover {
+  text-decoration: underline;
+}
+
+/* Player Profile Styles */
+.player-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.player-profile h3 {
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.player-profile .profile-info {
+  font-size: 1.1rem;
+  color: #4b5563;
+  display: flex;
+  justify-content: space-between;
+}
+
+.player-profile .badges {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.badge {
+  padding: 0.5rem 1rem;
   font-size: 1rem;
+  background-color: #e2e8f0;
+  color: #1f2937;
+  border-radius: 12px;
+  display: inline-block;
+  text-transform: capitalize;
+  font-weight: 500;
 }
 
-/* Table wrapper for responsiveness */
-.table-wrapper {
-  overflow-x: auto;
-}
-
-/* Table styling */
+/* Table Styles */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
-  font-size: 0.95rem;
+  margin-top: 2rem;
+  font-size: 1rem;
 }
 
 table th, table td {
@@ -92,21 +149,125 @@ table td {
   white-space: nowrap;
 }
 
-/* Responsive improvements */
-@media (max-width: 600px) {
-  h1 {
-    font-size: 1.5rem;
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .App {
+    padding: 1.5rem;
+  }
+
+  .player-profile {
+    padding: 1.5rem;
   }
 
   form {
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
-  input, button {
+  button, input, select, textarea {
     font-size: 0.95rem;
   }
 
   table th, table td {
-    padding: 0.5rem;
+    padding: 0.6rem;
   }
+}
+
+/* Additional styling for better readability */
+ul, ol {
+  padding-left: 2rem;
+}
+
+ul li, ol li {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.card-body {
+  font-size: 1rem;
+  color: #4b5563;
+}
+
+.card-footer {
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+/* Container for sections and inner components */
+.section {
+  margin-bottom: 2rem;
+}
+
+.section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.section p {
+  font-size: 1rem;
+  color: #4b5563;
+}
+
+/* Modal styles (optional) */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+}
+
+.modal-close {
+  background-color: #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+  background-color: #4b5563;
+  color: white;
+}
+
+/* Loader styles */
+.loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: #1d4ed8;
 }

@@ -3,16 +3,19 @@ import { getWeb3, getContract } from './web3';
 import RoundForm from './components/RoundForm';
 import RoundDetails from './components/RoundDetails';
 import HistoryTable from './components/HistoryTable';
-import './App.css';
 import TransactionInspector from './components/TransactionInspector';
-import PuzzleGame from './components/PuzzleGame'; // Import PuzzleGame component
+import PuzzleGame from './components/PuzzleGame';
+import PlayerProfile from './components/PlayerProfile'; // ✅ Import PlayerProfile
+import './App.css';
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [history, setHistory] = useState([]);
-  const [suggestedData, setSuggestedData] = useState({ round: '', reward: '', shapley: '' }); // default empty
+  const [reward, setReward] = useState(0); // Track player's reward
+  const [badges, setBadges] = useState([]); // Track player's badges
+  const [suggestedData, setSuggestedData] = useState({ round: '', reward: '', shapley: '' });
 
   useEffect(() => {
     const init = async () => {
@@ -46,12 +49,29 @@ const App = () => {
       }
     ]);
 
-    setSuggestedData({ round: '', reward: '', shapley: '' }); // clear after submit
+    setSuggestedData({ round: '', reward: '', shapley: '' }); // clear form after submission
   };
 
-  // 🎯 After puzzle solved → auto-fill form
+  // 🎯 When puzzle finished → auto-fill form with round data and update reward/badges
   const handlePuzzleFinish = ({ round, reward, shapley }) => {
     setSuggestedData({ round, reward, shapley });
+    setReward((prevReward) => prevReward + reward); // Update the total reward
+
+    // Badge awarding logic based on reward
+    let newBadges = [...badges]; // Copy current badges
+
+    // Award badge if certain reward thresholds are met
+    if (reward >= 1000 && !newBadges.includes('Master Puzzle Solver')) {
+      newBadges.push('Master Puzzle Solver');
+    }
+    if (reward >= 500 && !newBadges.includes('Puzzle Expert')) {
+      newBadges.push('Puzzle Expert');
+    }
+
+    // If new badges were awarded, update the badges state
+    if (newBadges.length > badges.length) {
+      setBadges(newBadges);
+    }
   };
 
   return (
@@ -62,13 +82,16 @@ const App = () => {
       {/* Puzzle Game Component */}
       <PuzzleGame onFinish={handlePuzzleFinish} />
 
-      {/* Round Form (auto-filled) */}
+      {/* Round Form (auto-filled after Puzzle) */}
       <RoundForm onSubmit={handleSubmit} suggestedData={suggestedData} />
 
-      {/* Round Details */}
+      {/* Player Profile Component */}
+      <PlayerProfile account={account} reward={reward} badges={badges} /> {/* ✅ NEW: Player profile visible */}
+
+      {/* Round Details from Contract */}
       <RoundDetails contract={contract} account={account} />
 
-      {/* History Table */}
+      {/* History of all Round Submissions */}
       <HistoryTable history={history} />
 
       {/* Transaction Inspector */}
