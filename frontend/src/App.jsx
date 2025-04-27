@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState } from 'react';
 import { getWeb3, getContract } from './web3';
 import RoundForm from './components/RoundForm';
@@ -6,6 +5,7 @@ import RoundDetails from './components/RoundDetails';
 import HistoryTable from './components/HistoryTable';
 import './App.css';
 import TransactionInspector from './components/TransactionInspector';
+import PuzzleGame from './components/PuzzleGame'; // Import PuzzleGame component
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -48,17 +48,20 @@ const App = () => {
       <h1>🏆 Incentive Round Submission</h1>
       <p>Connected account: {account}</p>
 
+      {/* Puzzle Game Component */}
+      <PuzzleGame /> {/* Adding the PuzzleGame here */}
+
       {/* Round Form */}
       <RoundForm onSubmit={handleSubmit} />
 
       {/* Round Details */}
       <RoundDetails contract={contract} account={account} />
 
-      {/* Transaction Inspector for inspecting individual transactions */}
-      {web3 && <TransactionInspector web3={web3} />}
-
       {/* History Table for displaying the history of submissions */}
       <HistoryTable history={history} />
+
+      {/* Transaction Inspector for inspecting individual transactions */}
+      {web3 && <TransactionInspector web3={web3} />}
     </div>
   );
 };
